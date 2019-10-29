@@ -1,0 +1,330 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v3.json",
+  "height": 581,
+  "width": 868,
+  "signals": [
+    {
+      "name": "RoleZ_ProportionSignal",
+      "value": 0.6,
+      "bind": {
+        "name": "Z scale proportion to Y",
+        "debounce": 50,
+        "input": "range",
+        "min": 0.2,
+        "max": 2,
+        "step": 0.1
+      }
+    },
+    {
+      "name": "RoleZ_HeightSignal",
+      "update": "height * RoleZ_ProportionSignal"
+    },
+    {
+      "name": "Text_ScaleSignal",
+      "value": 2,
+      "bind": {
+        "name": "Text scale",
+        "debounce": 50,
+        "input": "range",
+        "min": 1,
+        "max": 5,
+        "step": 0.5
+      }
+    },
+    {
+      "name": "Text_SizeSignal",
+      "update": "Text_ScaleSignal * 10"
+    },
+    {
+      "name": "Text_TitleSizeSignal",
+      "update": "Text_ScaleSignal * 15"
+    },
+    {
+      "name": "Text_AngleXSignal",
+      "value": 30,
+      "bind": {
+        "name": "X axis text angle",
+        "debounce": 50,
+        "input": "range",
+        "min": 0,
+        "max": 90,
+        "step": 1
+      }
+    },
+    {
+      "name": "Text_AngleYSignal",
+      "value": 0,
+      "bind": {
+        "name": "Y axis text angle",
+        "debounce": 50,
+        "input": "range",
+        "min": -90,
+        "max": 0,
+        "step": 1
+      }
+    },
+    {
+      "name": "Mark_OpacitySignal",
+      "value": 1,
+      "bind": {
+        "name": "Mark opacity",
+        "debounce": 50,
+        "input": "range",
+        "min": 0.1,
+        "max": 1,
+        "step": 0.05
+      }
+    },
+    {
+      "name": "RoleY_DomainSignal",
+      "update": "domain('MainYScale')"
+    },
+    {
+      "name": "Chart_PointSizeSignal",
+      "value": 5,
+      "bind": {
+        "name": "Point size",
+        "debounce": 50,
+        "input": "range",
+        "min": 1,
+        "max": 25,
+        "step": 1
+      }
+    },
+    {
+      "name": "RoleColor_BinCountSignal",
+      "value": 10,
+      "bind": {
+        "name": "Color bin count",
+        "input": "range",
+        "min": 1,
+        "max": 20,
+        "step": 1
+      }
+    },
+    {
+      "name": "RoleColor_ReverseSignal",
+      "value": true,
+      "bind": {
+        "name": "Color reverse",
+        "input": "checkbox"
+      }
+    }
+  ],
+  "data": [
+    {
+      "name": "SandDanceScatterPlotData",
+      "values": []
+    },
+    {
+      "name": "MainData",
+      "source": "SandDanceScatterPlotData",
+      "transform": [
+        {
+          "type": "filter",
+          "expr": "datum[\"vCPU\"] != null"
+        },
+        {
+          "type": "filter",
+          "expr": "datum[\"PricePerUnit\"] != null"
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "MainXScale",
+      "type": "linear",
+      "range": "width",
+      "round": true,
+      "reverse": false,
+      "domain": {
+        "data": "MainData",
+        "field": "vCPU"
+      },
+      "zero": false,
+      "nice": true
+    },
+    {
+      "name": "MainYScale",
+      "type": "point",
+      "range": "height",
+      "domain": {
+        "data": "MainData",
+        "field": "Memory",
+        "sort": true
+      },
+      "padding": 0.5,
+      "reverse": true
+    },
+    {
+      "name": "ColorScale",
+      "type": "quantile",
+      "domain": {
+        "data": "MainData",
+        "field": "PricePerUnit"
+      },
+      "range": {
+        "scheme": "spectral",
+        "count": {
+          "signal": "RoleColor_BinCountSignal"
+        }
+      },
+      "reverse": {
+        "signal": "RoleColor_ReverseSignal"
+      }
+    },
+    {
+      "name": "MainZScale",
+      "type": "linear",
+      "range": [
+        0,
+        {
+          "signal": "RoleZ_HeightSignal"
+        }
+      ],
+      "round": true,
+      "reverse": false,
+      "domain": {
+        "data": "MainData",
+        "field": "PricePerUnit"
+      },
+      "zero": false,
+      "nice": true
+    }
+  ],
+  "marks": [
+    {
+      "type": "rect",
+      "from": {
+        "data": "MainData"
+      },
+      "encode": {
+        "update": {
+          "x": {
+            "scale": "MainXScale",
+            "field": "vCPU",
+            "offset": 1
+          },
+          "width": {
+            "signal": "Chart_PointSizeSignal"
+          },
+          "y": [
+            {
+              "scale": "MainYScale",
+              "test": "datum.__SandDance__Collapsed",
+              "signal": "RoleY_DomainSignal[0]"
+            },
+            {
+              "scale": "MainYScale",
+              "field": "Memory",
+              "offset": {
+                "signal": "-Chart_PointSizeSignal"
+              }
+            }
+          ],
+          "height": [
+            {
+              "test": "datum.__SandDance__Collapsed",
+              "value": 0
+            },
+            {
+              "signal": "Chart_PointSizeSignal"
+            }
+          ],
+          "fill": {
+            "scale": "ColorScale",
+            "field": "PricePerUnit"
+          },
+          "opacity": {
+            "signal": "Mark_OpacitySignal"
+          },
+          "z": [
+            {
+              "test": "datum.__SandDance__Collapsed",
+              "value": 0
+            },
+            {
+              "scale": "MainZScale",
+              "field": "PricePerUnit"
+            }
+          ],
+          "depth": {
+            "signal": "Chart_PointSizeSignal"
+          }
+        }
+      }
+    }
+  ],
+  "axes": [
+    {
+      "scale": "MainXScale",
+      "title": "vCPU",
+      "orient": "bottom",
+      "labelAlign": "left",
+      "labelAngle": {
+        "signal": "Text_AngleXSignal"
+      },
+      "labelFontSize": {
+        "signal": "Text_SizeSignal"
+      },
+      "titleAngle": {
+        "signal": "Text_AngleXSignal"
+      },
+      "titleAlign": "left",
+      "titleFontSize": {
+        "signal": "Text_TitleSizeSignal"
+      },
+      "titleColor": "rgba(212,212,212,1)",
+      "tickSize": 10,
+      "domainColor": "rgba(212,212,212,1)",
+      "tickColor": "rgba(212,212,212,1)",
+      "labelColor": "rgba(212,212,212,1)",
+      "format": "~r"
+    },
+    {
+      "scale": "MainYScale",
+      "title": "Memory",
+      "orient": "left",
+      "labelAlign": "right",
+      "labelAngle": {
+        "signal": "Text_AngleYSignal"
+      },
+      "labelFontSize": {
+        "signal": "Text_SizeSignal"
+      },
+      "titleAngle": {
+        "signal": "Text_AngleYSignal"
+      },
+      "titleAlign": "right",
+      "titleFontSize": {
+        "signal": "Text_TitleSizeSignal"
+      },
+      "titleColor": "rgba(212,212,212,1)",
+      "tickSize": 10,
+      "domainColor": "rgba(212,212,212,1)",
+      "tickColor": "rgba(212,212,212,1)",
+      "labelColor": "rgba(212,212,212,1)"
+    }
+  ],
+  "legends": [
+    {
+      "orient": "none",
+      "title": "PricePerUnit",
+      "fill": "ColorScale",
+      "encode": {
+        "symbols": {
+          "update": {
+            "shape": {
+              "value": "square"
+            }
+          }
+        }
+      },
+      "type": "symbol",
+      "format": "~r"
+    }
+  ],
+  "autosize": "fit"
+}
+
